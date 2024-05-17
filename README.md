@@ -2,7 +2,7 @@
 
 Bringing core concepts from [anywidget](https://github.com/manzt/anywidget) to R.
 
-- Define widget as a JavaScript EcmaScript Module (ESM) string in R (no need for specialized JS files in `inst/`)
+- Define widget as a JavaScript EcmaScript Module (ESM) string in R
 - Access state using a subset of the AnyWidget `model` API.
 - Automatic re-renders upon value changes
 
