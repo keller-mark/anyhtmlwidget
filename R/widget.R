@@ -26,11 +26,12 @@
 #' @examples
 #' ESM <- "function render() {}
 #' anyhtmlwidget()
-anyhtmlwidget <- function(esm, width = NULL, height = NULL, element_id = NULL) {
+my_anyhtmlwidget <- function(esm, values = NULL, width = NULL, height = NULL, element_id = NULL) {
 
   # forward widget options to javascript
   params = list(
-    esm = esm
+    esm = esm,
+    values = values
   )
 
   # create widget
@@ -77,3 +78,53 @@ render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) { expr <- substitute(expr) } # force quoted
   htmlwidgets::shinyRenderWidget(expr, anyhtmlwidget_output, env, quoted = TRUE)
 }
+
+#' @export
+AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
+  lock_objects = FALSE,
+  private = list(
+    esm = NULL,
+    values = NULL
+  ),
+  active = list(
+    my_test = function(value) {
+
+    }
+  ),
+  public = list(
+    initialize = function(esm = NA, values = NA) {
+      private$esm <- esm
+      private$values <- values
+
+      active_env <- self$`.__enclos_env__`$`.__active__`
+
+      # TODO: check that values is not NA
+      for(key in names(values)) {
+        active_binding <- function(val) {
+          if(missing(val)) {
+            return(private$values[[key]])
+          } else {
+            private$values[[key]] <- val
+            print(self$render())
+          }
+        }
+        active_env[[key]] <- active_binding
+        makeActiveBinding(key, active_env[[key]], self)
+      }
+      self$`.__enclos_env__`$`.__active__` <- active_env
+
+    },
+    print = function() {
+      print(self$render())
+    },
+    render = function() {
+      w <- my_anyhtmlwidget(
+        esm = private$esm,
+        values = private$values,
+        width = 400,
+        height = 600
+      )
+      return(w)
+    }
+  )
+)

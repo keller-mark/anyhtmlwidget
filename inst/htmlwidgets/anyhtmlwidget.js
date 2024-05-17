@@ -1,3 +1,12 @@
+function valuesToModel(values) {
+  return {
+    get: (name) => {
+      return values[name];
+    },
+    // TODO: more anywidget model methods.
+  };
+}
+
 HTMLWidgets.widget({
   name: 'anyhtmlwidget',
   type: 'output',
@@ -5,6 +14,7 @@ HTMLWidgets.widget({
     // TODO: define shared variables for this instance
 
     let widget;
+    let model;
 
     return {
       renderValue: async function(x) {
@@ -23,10 +33,12 @@ HTMLWidgets.widget({
         	// TODO: initialize here
       	}
 
+      	model = valuesToModel(x.values);
+
       	try {
       	  // TODO: pass width/height?
       	  // TODO: pass anywidget/ipywidgets model-like object?
-      	  const cleanup = await widget.render({ el, width, height });
+      	  const cleanup = await widget.render({ model, el, width, height });
 
       	} catch(e) {
       	  // TODO: re-throw error
@@ -36,7 +48,7 @@ HTMLWidgets.widget({
       },
       resize: async function(width, height) {
         if(widget?.resize) {
-          await widget.resize({ el, width, height });
+          await widget.resize({ model, el, width, height });
         }
       }
     };
