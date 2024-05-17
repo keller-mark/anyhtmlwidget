@@ -87,9 +87,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     values = NULL
   ),
   active = list(
-    my_test = function(value) {
 
-    }
   ),
   public = list(
     initialize = function(esm = NA, values = NA) {
@@ -105,7 +103,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
             return(private$values[[key]])
           } else {
             private$values[[key]] <- val
-            print(self$render())
+            self$print()
           }
         }
         active_env[[key]] <- active_binding
