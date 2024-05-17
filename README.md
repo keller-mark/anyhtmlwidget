@@ -4,7 +4,8 @@ Bringing core concepts from [anywidget](https://github.com/manzt/anywidget) to R
 
 - Define widget as a JavaScript EcmaScript Module (ESM) string in R
 - Access state using a subset of the AnyWidget `model` API.
-- Automatic re-renders upon value changes
+- Automatic re-renders upon value changes (R -> JS unidirectional communication)
+- TODO: full bidirectional communication (JS -> R) (see [#1](https://github.com/keller-mark/anyhtmlwidget/issues/1) and [#3](https://github.com/keller-mark/anyhtmlwidget/issues/1))
 
 Note: this is currently an experiment
 
