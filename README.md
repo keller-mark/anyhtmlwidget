@@ -61,5 +61,6 @@ In contrast, Python Jupyter widgets (and by extension, AnyWidgets) keep an activ
 When R htmlwidgets are running within Shiny apps, they have access to `Shiny.setInputValue()` which can be used to send data back to the Shiny process (i.e., updating values or triggering re-renders).
 One option to enable bidirectional communication in both scenarios is to use Shiny for the RStudio Viewer usage as well.
 This is the approach used by projects such as [Unravel](https://github.com/nischalshrestha/Unravel/blob/35f697761942847fe17a9c6de72d48e8998e9ec1/R/unravel.R#L14) which rely on both running in the Viewer pane and sending values back to the R process upon user interactions.
+This seems like a good path forward, however there may be performance limitations as `setInputValue` operates using strings/JSON and does not offer an analog Jupyter's support for binary data via ArrayBuffers.
 
 
