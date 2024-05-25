@@ -20,7 +20,7 @@ function render({ el, model, width, height }) {
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "shiny", count = 1)
-widget
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "dynamic", count = 1)
+widget$render()
 
 
