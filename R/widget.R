@@ -84,7 +84,8 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   lock_objects = FALSE,
   private = list(
     esm = NULL,
-    values = NULL
+    values = NULL,
+    in_viewer = NULL
   ),
   active = list(
 
@@ -93,6 +94,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     initialize = function(esm = NA, values = NA) {
       private$esm <- esm
       private$values <- values
+      private$in_viewer <- FALSE
 
       active_env <- self$`.__enclos_env__`$`.__active__`
 
@@ -103,14 +105,27 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
             return(private$values[[key]])
           } else {
             private$values[[key]] <- val
-            self$print()
+            if(!private$in_viewer) {
+              self$print()
+            }
           }
         }
         active_env[[key]] <- active_binding
         makeActiveBinding(key, active_env[[key]], self)
       }
       self$`.__enclos_env__`$`.__active__` <- active_env
-
+    },
+    set_value = function(key, val) {
+      private$values[[key]] <- val
+    },
+    get_esm = function() {
+      return(private$esm)
+    },
+    get_values = function() {
+      return(private$values)
+    },
+    set_in_viewer = function(v) {
+      private$in_viewer <- v
     },
     print = function() {
       print(self$render())
@@ -126,3 +141,64 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     }
   )
 )
+
+
+invoke_widget <- function(w, viewer = T) {
+  require(anyhtmlwidget)
+  require(shiny)
+
+  w$set_in_viewer(TRUE)
+
+  ui <- fluidPage(
+    anyhtmlwidget_output(output_id = "my_widget")
+  )
+
+  server <- function(input, output, session) {
+    rv <- reactiveValues(current=w$get_values())
+
+    observeEvent(input$anyhtmlwidget_on_save_changes, {
+      # We can access any values from the coordination space here.
+      # In this example, we access the ID of the currently-hovered cell.
+      rv$current <- input$anyhtmlwidget_on_save_changes
+
+      # update values on w here
+      for(key in names(input$anyhtmlwidget_on_save_changes)) {
+        w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]])
+      }
+    })
+    output$values <- renderPrint({ rv$current })
+
+    output$my_widget <- render_anyhtmlwidget(expr = {
+      my_anyhtmlwidget(esm = w$get_esm(), values = rv$current)
+    })
+  }
+
+  # by default run on Viewer pane, else on browser
+  if (viewer) {
+    #on.exit(options(shiny.launch.browser = .rs.invokeShinyPaneViewer, add = TRUE))
+  }
+
+  runGadget(
+    ui,
+    server,
+    # onStart = function() {
+    #   # if Unravel was attached, detach it upon exit
+    #   onStop(function() {
+    #     attached <- search()
+    #     if ('package:anyhtmlwidget' %in% attached)
+    #       detach('package:anyhtmlwidget')
+    #   })
+    # },
+    # options = list(quiet = TRUE)
+  )
+}
+
+GLOBAL_WIDGET <<- NULL
+
+invoke_widget_bg <- function(w) {
+  GLOBAL_WIDGET <<- w
+  txtPath <- tempfile(fileext = "R")
+  writeLines(text = "anyhtmlwidget::invoke_widget(GLOBAL_WIDGET)",
+             con = txtPath)
+  rstudioapi::jobRunScript(txtPath, importEnv = TRUE)
+}
