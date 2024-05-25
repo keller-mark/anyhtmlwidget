@@ -1,5 +1,6 @@
 class AnyModel {
-  constructor(state) {
+  constructor(state, ns_id) {
+    this.ns_id = ns_id;
     this.state = state;
     this.target = new EventTarget();
   }
@@ -17,7 +18,8 @@ class AnyModel {
   }
   save_changes() {
     if(window && window.Shiny && window.Shiny.setInputValue) {
-      Shiny.setInputValue("anyhtmlwidget_on_save_changes", this.state);
+      const eventPrefix = this.ns_id ? `${this.ns_id}-` : '';
+      Shiny.setInputValue(`${eventPrefix}anyhtmlwidget_on_save_changes`, this.state);
     }
   }
 }
@@ -58,10 +60,11 @@ HTMLWidgets.widget({
         	// TODO: initialize here
       	}
 
-      	model = new AnyModel(x.values);
+      	model = new AnyModel(x.values, x.ns_id);
 
       	if(window && window.Shiny && window.Shiny.addCustomMessageHandler) {
-      	  Shiny.addCustomMessageHandler("anyhtmlwidget_on_change", ({ key, value}) => {
+      	  const eventPrefix = x.ns_id ? `${x.ns_id}-` : '';
+      	  Shiny.addCustomMessageHandler(`${eventPrefix}anyhtmlwidget_on_change`, ({ key, value}) => {
       	    model.set(key, value);
       	  });
       	}

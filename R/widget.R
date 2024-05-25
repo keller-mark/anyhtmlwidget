@@ -26,12 +26,13 @@
 #' @examples
 #' ESM <- "function render() {}
 #' anyhtmlwidget()
-the_anyhtmlwidget <- function(esm, values = NULL, width = NULL, height = NULL, element_id = NULL) {
+the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, element_id = NULL) {
 
   # forward widget options to javascript
   params = list(
     esm = esm,
-    values = values
+    values = values,
+    ns_id = ns_id
   )
 
   # create widget
@@ -152,7 +153,14 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       private$mode <- mode
     },
     print = function() {
-      print(self$render())
+      if(private$mode == "shiny") {
+        # If Shiny mode, we just want to use the original R6 print behavior.
+        # Reference: https://github.com/r-lib/R6/blob/507867875fdeaffbe7f7038291256b798f6bb042/R/print.R#L35C5-L35C36
+        print(cat(format(self), sep = "\n"))
+      } else {
+        # Otherwise, we want to render the widget.
+        self$render()
+      }
     },
     render = function() {
       if(private$mode == "static") {
@@ -171,7 +179,7 @@ invoke_static <- function(w) {
     width = 400,
     height = 600
   )
-  return(w)
+  print(w)
 }
 
 invoke_gadget <- function(w) {
@@ -184,26 +192,23 @@ invoke_gadget <- function(w) {
   )
 
   server <- function(input, output, session) {
-    rv <- reactiveValues(increment=0)
+    increment <- reactiveVal(0)
 
     observeEvent(input$anyhtmlwidget_on_save_changes, {
-      # We can access any values from the coordination space here.
-      # In this example, we access the ID of the currently-hovered cell.
-
       # update values on w here
       for(key in names(input$anyhtmlwidget_on_save_changes)) {
         w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]], emit_change = FALSE)
       }
-      rv$increment <- rv$increment + 1
+      increment(increment() + 1)
     })
     output$values <- renderPrint({
-      rv$increment
+      increment()
       w$get_values()
     })
 
     observeEvent(input$go, {
       w$count <- 999
-      rv$increment <- rv$increment + 1
+      increment(increment() + 1)
     })
 
     w$on_change(function(key, new_val) {
@@ -216,4 +221,42 @@ invoke_gadget <- function(w) {
   }
 
   runGadget(ui, server)
+}
+
+# Shiny module UI
+widgetUI <- function(id) {
+  ns <- NS(id)
+  anyhtmlwidget_output(output_id = ns("widget"))
+}
+
+# Shiny module server
+widgetServer <- function(id, w) {
+  ns <- NS(id)
+  moduleServer(
+    id,
+    function(input, output, session) {
+      initial_values <- w$get_values()
+      rv <- do.call(reactiveValues, initial_values)
+
+      observeEvent(input$anyhtmlwidget_on_save_changes, {
+        # update values on w here
+        for(key in names(input$anyhtmlwidget_on_save_changes)) {
+          rv[[key]] <- input$anyhtmlwidget_on_save_changes[[key]]
+          w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]], emit_change = FALSE)
+        }
+      })
+
+      for(key in names(initial_values)) {
+        observeEvent(rv[[key]], {
+          session$sendCustomMessage(ns("anyhtmlwidget_on_change"), list(key = key, value = rv[[key]]))
+        })
+      }
+
+      output$widget <- render_anyhtmlwidget(expr = {
+        the_anyhtmlwidget(esm = w$get_esm(), values = initial_values, ns_id = id)
+      })
+
+      return(rv)
+    }
+  )
 }

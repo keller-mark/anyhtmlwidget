@@ -3,46 +3,43 @@ library(anyhtmlwidget)
 
 esm <- "
 function render({ el, model, width, height }) {
+  console.log(window);
   console.log(model);
-  let count = () => model.get('value');
+  let count = () => model.get('count');
   el.style.border = '4px solid red';
   let btn = document.createElement('button');
   btn.innerHTML = `count button ${count()}`;
   btn.addEventListener('click', () => {
-    model.set('value', count() + 1);
+    model.set('count', count() + 1);
     model.save_changes();
   });
-
+  model.on('change:count', () => {
+        btn.innerHTML = `count is ${count()}`;
+  });
   el.appendChild(btn);
 }
-function resize({ el, width, height }) {
-  el.style.width = width;
-  el.style.height = height;
-
-  console.log('from resize');
-}
-export default { render, resize };
+export default { render };
 "
+
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "shiny", count = 2)
 
 
 ui <- fluidPage(
   "anyhtmlwidget",
-  anyhtmlwidget_output(output_id = "my_widget"),
-  verbatimTextOutput("values")
+  widgetUI("my_widget"),
+  verbatimTextOutput("values"),
+  actionButton("go", label = "Go")
 )
 
 server <- function(input, output, session) {
-  rv <- reactiveValues(current=list(value = 1))
+  rv <- widgetServer("my_widget", widget)
 
-  observeEvent(input$anyhtmlwidget_on_save_changes, {
-    # We can access any values from the coordination space here.
-    # In this example, we access the ID of the currently-hovered cell.
-    rv$current <- input$anyhtmlwidget_on_save_changes
+  output$values <- renderPrint({
+    rv$count
   })
-  output$values <- renderPrint({ rv$current })
 
-  output$my_widget <- render_anyhtmlwidget(expr = {
-    my_anyhtmlwidget(esm = esm, values = rv$current)
+  observeEvent(input$go, {
+    rv$count <- 999
   })
 }
 
