@@ -58,6 +58,7 @@ widget$count
 
 - `static`
 - `gadget`
+- `dynamic` (TODO: see [#7](https://github.com/keller-mark/anyhtmlwidget/issues/7))
 - `shiny`
 
 <!--
