@@ -30,11 +30,7 @@ function render({ el, model, width, height }) {
 export default { render };
 "
 
-values <- list(
-  count = 1
-)
-
-widget <- AnyHtmlWidget$new(esm = esm, values = values)
+widget <- AnyHtmlWidget$new(esm = esm, mode = "static", count = 1)
 widget
 ```
 
@@ -51,6 +47,7 @@ widget$count
 # [1] 2
 ```
 
+<!--
 ## Bidirectional communication
 
 At the moment, this project is using R [htmlwidgets](https://www.htmlwidgets.org/) under the hood.
@@ -63,5 +60,5 @@ When R htmlwidgets are running within Shiny apps, they have access to `Shiny.set
 One option to enable bidirectional communication in both scenarios is to use Shiny for the RStudio Viewer usage as well.
 This is the approach used by projects such as [Unravel](https://github.com/nischalshrestha/Unravel/blob/35f697761942847fe17a9c6de72d48e8998e9ec1/R/unravel.R#L14) which rely on both running in the Viewer pane and sending values back to the R process upon user interactions.
 This seems like a good path forward, however there may be performance limitations as `setInputValue` operates using strings/JSON and does not offer an analog Jupyter's support for binary data via ArrayBuffers.
-
+-->
 
