@@ -1,23 +1,50 @@
-function valuesToModel(values) {
-  return {
-    get: (name) => {
-      return values[name];
-    },
-    // TODO: more anywidget model methods.
-  };
+class AnyModel {
+  constructor(state, ns_id) {
+    this.ns_id = ns_id;
+    this.state = state;
+    this.target = new EventTarget();
+  }
+  get(name) {
+    return this.state[name];
+  }
+  set(key, value) {
+    this.state[key] = value;
+    this.target.dispatchEvent(
+			new CustomEvent(`change:${key}`, { detail: value }),
+		);
+  }
+  on(name, callback) {
+    this.target.addEventListener(name, callback);
+  }
+  save_changes() {
+    if(window && window.Shiny && window.Shiny.setInputValue) {
+      const eventPrefix = this.ns_id ? `${this.ns_id}-` : '';
+      Shiny.setInputValue(`${eventPrefix}anyhtmlwidget_on_save_changes`, this.state);
+    }
+  }
+}
+
+function emptyElement(el) {
+	while (el.firstChild) {
+		el.removeChild(el.firstChild);
+	}
 }
 
 HTMLWidgets.widget({
   name: 'anyhtmlwidget',
   type: 'output',
   factory: function(el, width, height) {
-    // TODO: define shared variables for this instance
 
     let widget;
     let model;
+    let cleanup;
 
     return {
       renderValue: async function(x) {
+        if(cleanup && typeof cleanup === "function") {
+          cleanup();
+          cleanup = undefined;
+        }
       	// The default can either be an object like { render, initialize }
       	// or a function that returns this object.
       	if(!widget) {
@@ -33,18 +60,23 @@ HTMLWidgets.widget({
         	// TODO: initialize here
       	}
 
-      	model = valuesToModel(x.values);
+      	model = new AnyModel(x.values, x.ns_id);
+
+      	if(window && window.Shiny && window.Shiny.addCustomMessageHandler) {
+      	  const eventPrefix = x.ns_id ? `${x.ns_id}-` : '';
+      	  Shiny.addCustomMessageHandler(`${eventPrefix}anyhtmlwidget_on_change`, ({ key, value}) => {
+      	    model.set(key, value);
+      	  });
+      	}
 
       	try {
-      	  // TODO: pass width/height?
-      	  // TODO: pass anywidget/ipywidgets model-like object?
-      	  const cleanup = await widget.render({ model, el, width, height });
+      	  emptyElement(el);
+          // Register cleanup function.
+      	  cleanup = await widget.render({ model, el, width, height });
 
       	} catch(e) {
       	  // TODO: re-throw error
       	}
-
-      	// TODO: register cleanup function somehow, then call later
       },
       resize: async function(width, height) {
         if(widget?.resize) {

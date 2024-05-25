@@ -2,23 +2,25 @@ library(anyhtmlwidget)
 
 esm <- "
 function render({ el, model, width, height }) {
+  console.log(window);
+  console.log(model);
+  let count = () => model.get('count');
   el.style.border = '4px solid red';
   let btn = document.createElement('button');
-  btn.innerHTML = `count is ${model.get('count')}`;
+  btn.innerHTML = `count button ${count()}`;
+  btn.addEventListener('click', () => {
+    model.set('count', count() + 1);
+    model.save_changes();
+  });
+  model.on('change:count', () => {
+        btn.innerHTML = `count is ${count()}`;
+  });
   el.appendChild(btn);
 }
 export default { render };
 "
 
-values <- list(
-  count = 1
-)
-
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, values = values)
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "shiny", count = 1)
 widget
 
-widget$count <- 2
 
-widget$count <- 3
-
-widget$count

@@ -2,31 +2,44 @@ library(shiny)
 library(anyhtmlwidget)
 
 esm <- "
-function render({ el, width, height }) {
+function render({ el, model, width, height }) {
+  console.log(window);
+  console.log(model);
+  let count = () => model.get('count');
   el.style.border = '4px solid red';
   let btn = document.createElement('button');
-  btn.innerHTML = `count button`;
-
+  btn.innerHTML = `count button ${count()}`;
+  btn.addEventListener('click', () => {
+    model.set('count', count() + 1);
+    model.save_changes();
+  });
+  model.on('change:count', () => {
+        btn.innerHTML = `count is ${count()}`;
+  });
   el.appendChild(btn);
 }
-function resize({ el, width, height }) {
-  el.style.width = width;
-  el.style.height = height;
-
-  console.log('from resize');
-}
-export default { render, resize };
+export default { render };
 "
+
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "shiny", count = 2)
 
 
 ui <- fluidPage(
   "anyhtmlwidget",
-  anyhtmlwidget_output(output_id = "my_widget"),
+  widgetUI("my_widget"),
+  verbatimTextOutput("values"),
+  actionButton("go", label = "Go")
 )
 
 server <- function(input, output, session) {
-  output$my_widget <- render_anyhtmlwidget(expr = {
-    anyhtmlwidget(esm = esm)
+  rv <- widgetServer("my_widget", widget)
+
+  output$values <- renderPrint({
+    rv$count
+  })
+
+  observeEvent(input$go, {
+    rv$count <- 999
   })
 }
 
