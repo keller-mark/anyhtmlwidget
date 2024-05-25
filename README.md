@@ -21,10 +21,8 @@ library(anyhtmlwidget)
 
 esm <- "
 function render({ el, model, width, height }) {
-  console.log(window);
-  console.log(model);
   let count = () => model.get('count');
-  el.style.border = '4px solid red';
+  el.style.border = '1px solid red';
   let btn = document.createElement('button');
   btn.innerHTML = `count button ${count()}`;
   btn.addEventListener('click', () => {
