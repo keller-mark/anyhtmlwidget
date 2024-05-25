@@ -4,8 +4,7 @@ Bringing core concepts from [anywidget](https://github.com/manzt/anywidget) to R
 
 - Define widget as a JavaScript EcmaScript Module (ESM) string in R
 - Access state using a subset of the AnyWidget `model` API.
-- Automatic re-renders upon value changes (R -> JS unidirectional communication)
-- TODO: full bidirectional communication (JS -> R) (see [#1](https://github.com/keller-mark/anyhtmlwidget/issues/1) and [#3](https://github.com/keller-mark/anyhtmlwidget/issues/1))
+- Bidirectional communication (R <-> JS)
 
 Note: this is currently an experiment
 
@@ -22,9 +21,19 @@ library(anyhtmlwidget)
 
 esm <- "
 function render({ el, model, width, height }) {
+  console.log(window);
+  console.log(model);
+  let count = () => model.get('count');
   el.style.border = '4px solid red';
   let btn = document.createElement('button');
-  btn.innerHTML = `count is ${model.get('count')}`;
+  btn.innerHTML = `count button ${count()}`;
+  btn.addEventListener('click', () => {
+    model.set('count', count() + 1);
+    model.save_changes();
+  });
+  model.on('change:count', () => {
+        btn.innerHTML = `count is ${count()}`;
+  });
   el.appendChild(btn);
 }
 export default { render };
