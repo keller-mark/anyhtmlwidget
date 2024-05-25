@@ -54,6 +54,12 @@ widget$count
 # [1] 2
 ```
 
+## Modes
+
+- `static`
+- `gadget`
+- `shiny`
+
 <!--
 ## Bidirectional communication
 
