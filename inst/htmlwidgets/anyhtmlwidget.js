@@ -1,5 +1,4 @@
 class AnyModel {
-
   constructor(state) {
     this.state = state;
     this.target = new EventTarget();
@@ -60,6 +59,12 @@ HTMLWidgets.widget({
       	}
 
       	model = new AnyModel(x.values);
+
+      	if(window && window.Shiny && window.Shiny.addCustomMessageHandler) {
+      	  Shiny.addCustomMessageHandler("anyhtmlwidget_on_change", ({ key, value}) => {
+      	    model.set(key, value);
+      	  });
+      	}
 
       	try {
       	  emptyElement(el);

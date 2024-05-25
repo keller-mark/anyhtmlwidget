@@ -26,7 +26,7 @@
 #' @examples
 #' ESM <- "function render() {}
 #' anyhtmlwidget()
-my_anyhtmlwidget <- function(esm, values = NULL, width = NULL, height = NULL, element_id = NULL) {
+the_anyhtmlwidget <- function(esm, values = NULL, width = NULL, height = NULL, element_id = NULL) {
 
   # forward widget options to javascript
   params = list(
@@ -85,27 +85,35 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   private = list(
     esm = NULL,
     values = NULL,
-    in_viewer = NULL
+    mode = NULL,
+    change_handler = NULL
   ),
   active = list(
 
   ),
   public = list(
-    initialize = function(esm = NA, values = NA) {
+    initialize = function(esm = NA, mode = NA, ...) {
       private$esm <- esm
-      private$values <- values
-      private$in_viewer <- FALSE
+      private$values <- list(...)
+
+      if(is.na(mode)) {
+        mode <- "static"
+      }
+      if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
+        stop("Invalid widget mode.")
+      }
+      private$mode <- mode
 
       active_env <- self$`.__enclos_env__`$`.__active__`
 
       # TODO: check that values is not NA
-      for(key in names(values)) {
+      for(key in names(private$values)) {
         active_binding <- function(val) {
           if(missing(val)) {
-            return(private$values[[key]])
+            return(self$get_value(key))
           } else {
-            private$values[[key]] <- val
-            if(!private$in_viewer) {
+            self$set_value(key, val)
+            if(private$mode == "static") {
               self$print()
             }
           }
@@ -115,8 +123,18 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       }
       self$`.__enclos_env__`$`.__active__` <- active_env
     },
-    set_value = function(key, val) {
+    set_value = function(key, val, emit_change = TRUE) {
       private$values[[key]] <- val
+      if(emit_change && !is.null(private$change_handler)) {
+        # Should this only call the callback if the current value is different than the new value?
+        private$change_handler(key, val)
+      }
+    },
+    on_change = function(callback) {
+      private$change_handler <- callback
+    },
+    get_value = function(key) {
+      return(private$values[[key]])
     },
     get_esm = function() {
       return(private$esm)
@@ -124,81 +142,78 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     get_values = function() {
       return(private$values)
     },
-    set_in_viewer = function(v) {
-      private$in_viewer <- v
+    set_values = function(new_values) {
+      private$values <- new_values
+    },
+    set_mode = function(mode) {
+      if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
+        stop("Invalid widget mode.")
+      }
+      private$mode <- mode
     },
     print = function() {
       print(self$render())
     },
     render = function() {
-      w <- my_anyhtmlwidget(
-        esm = private$esm,
-        values = private$values,
-        width = 400,
-        height = 600
-      )
-      return(w)
+      if(private$mode == "static") {
+        invoke_static(self)
+      } else if(private$mode == "gadget") {
+        invoke_gadget(self)
+      }
     }
   )
 )
 
+invoke_static <- function(w) {
+  w <- the_anyhtmlwidget(
+    esm = w$get_esm(),
+    values = w$get_values(),
+    width = 400,
+    height = 600
+  )
+  return(w)
+}
 
-invoke_widget <- function(w, viewer = T) {
-  require(anyhtmlwidget)
+invoke_gadget <- function(w) {
   require(shiny)
 
-  w$set_in_viewer(TRUE)
-
   ui <- fluidPage(
-    anyhtmlwidget_output(output_id = "my_widget")
+    anyhtmlwidget_output(output_id = "my_widget"),
+    verbatimTextOutput("values"),
+    shiny::actionButton("go", label = "Go")
   )
 
   server <- function(input, output, session) {
-    rv <- reactiveValues(current=w$get_values())
+    rv <- reactiveValues(increment=0)
 
     observeEvent(input$anyhtmlwidget_on_save_changes, {
       # We can access any values from the coordination space here.
       # In this example, we access the ID of the currently-hovered cell.
-      rv$current <- input$anyhtmlwidget_on_save_changes
 
       # update values on w here
       for(key in names(input$anyhtmlwidget_on_save_changes)) {
-        w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]])
+        w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]], emit_change = FALSE)
       }
+      rv$increment <- rv$increment + 1
     })
-    output$values <- renderPrint({ rv$current })
+    output$values <- renderPrint({
+      rv$increment
+      w$get_values()
+    })
+
+    observeEvent(input$go, {
+      w$count <- 999
+      rv$increment <- rv$increment + 1
+    })
+
+    w$on_change(function(key, new_val) {
+      session$sendCustomMessage("anyhtmlwidget_on_change", list(key = key, value = new_val))
+    })
 
     output$my_widget <- render_anyhtmlwidget(expr = {
-      my_anyhtmlwidget(esm = w$get_esm(), values = rv$current)
+      the_anyhtmlwidget(esm = w$get_esm(), values = w$get_values())
     })
   }
 
-  # by default run on Viewer pane, else on browser
-  if (viewer) {
-    #on.exit(options(shiny.launch.browser = .rs.invokeShinyPaneViewer, add = TRUE))
-  }
-
-  runGadget(
-    ui,
-    server,
-    # onStart = function() {
-    #   # if Unravel was attached, detach it upon exit
-    #   onStop(function() {
-    #     attached <- search()
-    #     if ('package:anyhtmlwidget' %in% attached)
-    #       detach('package:anyhtmlwidget')
-    #   })
-    # },
-    # options = list(quiet = TRUE)
-  )
-}
-
-GLOBAL_WIDGET <<- NULL
-
-invoke_widget_bg <- function(w) {
-  GLOBAL_WIDGET <<- w
-  txtPath <- tempfile(fileext = "R")
-  writeLines(text = "anyhtmlwidget::invoke_widget(GLOBAL_WIDGET)",
-             con = txtPath)
-  rstudioapi::jobRunScript(txtPath, importEnv = TRUE)
+  runGadget(ui, server)
 }

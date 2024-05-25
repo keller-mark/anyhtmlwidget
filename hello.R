@@ -12,17 +12,15 @@ function render({ el, model, width, height }) {
     model.set('count', count() + 1);
     model.save_changes();
   });
-
+  model.on('change:count', () => {
+        btn.innerHTML = `count is ${count()}`;
+  });
   el.appendChild(btn);
 }
 export default { render };
 "
 
-values <- list(
-  count = 1
-)
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "gadget", count = 1)
+widget
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, values = values)
-
-widget$print()
 

@@ -44,7 +44,6 @@ server <- function(input, output, session) {
   output$my_widget <- render_anyhtmlwidget(expr = {
     my_anyhtmlwidget(esm = esm, values = rv$current)
   })
-
 }
 
 shinyApp(ui, server)
