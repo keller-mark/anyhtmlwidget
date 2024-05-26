@@ -18,5 +18,7 @@ function render({ el, model, width, height }) {
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "dynamic", count = 1)
+
+
+widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "dynamic", values=list(count = 1))
 widget$render()

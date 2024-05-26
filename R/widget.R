@@ -74,15 +74,34 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     change_handler = NULL,
     server = NULL,
     server_host = NULL,
-    server_port = NULL
+    server_port = NULL,
+    .width = NULL,
+    .height = NULL
   ),
   active = list(
-
+    width = function(value) {
+      if (missing(value)) {
+        return(private$.width)
+      } else {
+        private$.width <- value
+        # TODO: re-render if mode is "static"?
+        # TODO: emit via change handler?
+      }
+    },
+    height = function(value) {
+      if (missing(value)) {
+        return(private$.height)
+      } else {
+        private$.height <- value
+        # TODO: re-render if mode is "static"?
+        # TODO: emit via change handler?
+      }
+    }
   ),
   public = list(
-    initialize = function(esm = NA, mode = NA, width = NA, height = NA, ...) {
+    initialize = function(esm = NA, mode = NA, width = NA, height = NA, values = NA) {
       private$esm <- esm
-      private$values <- list(...)
+      private$values <- values
 
       if(is.na(width)) {
         width <- 600
@@ -91,11 +110,11 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         height <- 400
       }
 
-      #private$values$width <- width
-      #private$values$height <- height
+      private$.width <- width
+      private$.height <- height
 
       private$server_host <- "0.0.0.0"
-      private$server_port <- 8080
+      private$server_port <- httpuv::randomPort(min = 8000, max = 9000, n = 1000)
 
       if(is.na(mode)) {
         mode <- "static"
@@ -201,7 +220,6 @@ invoke_static <- function(w) {
 }
 
 invoke_dynamic <- function(w) {
-  # TODO: start_server should return a random port
   w$start_server()
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
