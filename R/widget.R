@@ -30,7 +30,8 @@ the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, he
     sizingPolicy = htmlwidgets::sizingPolicy(
       viewer.padding = 0,
       browser.padding = 0,
-      browser.fill = TRUE
+      browser.fill = TRUE,
+      viewer.fill = TRUE
     )
   )
 }
@@ -196,6 +197,8 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         invoke_gadget(self)
       } else if(private$mode == "dynamic") {
         invoke_dynamic(self)
+      } else {
+        stop("render is meant for use with static, gadget, and dynamic modes")
       }
     }
   )
@@ -227,10 +230,8 @@ invoke_dynamic <- function(w) {
 invoke_gadget <- function(w) {
   require(shiny)
 
-  ui <- fluidPage(
-    anyhtmlwidget_output(output_id = "my_widget"),
-    verbatimTextOutput("values"),
-    shiny::actionButton("go", label = "Go")
+  ui <- tagList(
+    anyhtmlwidget_output(output_id = "my_widget", width = '100%', height = '100%')
   )
 
   server <- function(input, output, session) {
@@ -243,15 +244,16 @@ invoke_gadget <- function(w) {
       }
       increment(increment() + 1)
     })
-    output$values <- renderPrint({
-      increment()
-      w$get_values()
-    })
 
-    observeEvent(input$go, {
-      w$count <- 999
-      increment(increment() + 1)
-    })
+    # output$values <- renderPrint({
+    #   increment()
+    #   w$get_values()
+    # })
+    #
+    # observeEvent(input$go, {
+    #   w$count <- 999
+    #   increment(increment() + 1)
+    # })
 
     w$on_change(function(key, new_val) {
       session$sendCustomMessage("anyhtmlwidget_on_change", list(key = key, value = new_val))
@@ -266,9 +268,9 @@ invoke_gadget <- function(w) {
 }
 
 # Shiny module UI
-widgetUI <- function(id) {
+widgetUI <- function(id, width = '100%', height = '400px') {
   ns <- NS(id)
-  anyhtmlwidget_output(output_id = ns("widget"))
+  anyhtmlwidget_output(output_id = ns("widget"), width = width, height = height)
 }
 
 # Shiny module server
@@ -295,7 +297,7 @@ widgetServer <- function(id, w) {
       }
 
       output$widget <- render_anyhtmlwidget(expr = {
-        the_anyhtmlwidget(esm = w$get_esm(), values = initial_values,  width = w$width, height = w$height, ns_id = id)
+        the_anyhtmlwidget(esm = w$get_esm(), values = initial_values,  width = w$get_width(), height = w$get_height(), ns_id = id)
       })
 
       return(rv)

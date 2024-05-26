@@ -2,5 +2,6 @@ dependencies:
   - name: anyhtmlwidget
     version: 0.99.1
     src: htmlwidgets/lib
+    stylesheet: index.css
     script:
       - index.js

@@ -2,9 +2,7 @@ library(shiny)
 library(anyhtmlwidget)
 
 esm <- "
-function render({ el, model, width, height }) {
-  console.log(window);
-  console.log(model);
+function render({ el, model }) {
   let count = () => model.get('count');
   el.style.border = '4px solid red';
   let btn = document.createElement('button');
