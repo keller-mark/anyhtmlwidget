@@ -8,8 +8,11 @@ start_server <- function(w, host = "0.0.0.0", port = 8080) {
 
       w$on_change(function(key, new_val) {
         msg_list <- list(
-          type = "on_change",
-          payload = list(key = key, value = new_val)
+          type = jsonlite::unbox("on_change"),
+          payload = list(
+            key = jsonlite::unbox(key),
+            value = jsonlite::unbox(new_val)
+          )
         )
         ws$send(jsonlite::toJSON(msg_list, auto_unbox = FALSE))
       })

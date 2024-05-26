@@ -8,13 +8,15 @@
 #' @return The htmlwidget.
 #'
 #' @export
-the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, element_id = NULL) {
+the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, port = NULL, host = NULL, element_id = NULL) {
 
   # forward widget options to javascript
   params = list(
     esm = esm,
     values = values,
-    ns_id = ns_id
+    ns_id = ns_id,
+    port = port,
+    host = host
   )
 
   # create widget
@@ -70,7 +72,9 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     values = NULL,
     mode = NULL,
     change_handler = NULL,
-    server = NULL
+    server = NULL,
+    server_host = NULL,
+    server_port = NULL
   ),
   active = list(
 
@@ -87,8 +91,11 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         height <- 400
       }
 
-      private$values$width <- width
-      private$values$height <- height
+      #private$values$width <- width
+      #private$values$height <- height
+
+      private$server_host <- "0.0.0.0"
+      private$server_port <- 8080
 
       if(is.na(mode)) {
         mode <- "static"
@@ -146,13 +153,20 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       private$mode <- mode
     },
     start_server = function() {
-      # TODO:
-      private$server <- start_server(self)
+      if(is.null(private$server)) {
+        private$server <- start_server(self, host = private$server_host, port = private$server_port)
+      }
     },
     stop_server = function() {
       if(!is.null(private$server)) {
         private$server$stop()
       }
+    },
+    get_host = function() {
+      return(private$server_host)
+    },
+    get_port = function() {
+      return(private$server_port)
     },
     print = function() {
       if(private$mode == "shiny") {
@@ -192,9 +206,10 @@ invoke_dynamic <- function(w) {
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
     values = w$get_values(),
-    width = w$width,
-    height = w$height,
-    # TODO: pass the port and hostname
+    width = 400,
+    height = 600,
+    port = w$get_port(),
+    host = w$get_host()
   )
   print(w)
 }
