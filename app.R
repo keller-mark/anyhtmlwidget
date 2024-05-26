@@ -21,7 +21,7 @@ function render({ el, model, width, height }) {
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "shiny", count = 2)
+widget <- anyhtmlwidget::AnyHtmlWidget$new(.esm = esm, .mode = "shiny", count = 2)
 
 
 ui <- fluidPage(

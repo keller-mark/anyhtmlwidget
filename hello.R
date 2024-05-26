@@ -3,7 +3,6 @@ library(anyhtmlwidget)
 esm <- "
 function render({ el, model, width, height }) {
   let count = () => model.get('count');
-  el.style.border = '4px solid red';
   let btn = document.createElement('button');
   btn.innerHTML = `count is ${count()}`;
   btn.addEventListener('click', () => {
@@ -18,7 +17,5 @@ function render({ el, model, width, height }) {
 export default { render };
 "
 
-
-
-widget <- anyhtmlwidget::AnyHtmlWidget$new(esm = esm, mode = "dynamic", values=list(count = 1))
+widget <- anyhtmlwidget::AnyHtmlWidget$new(.esm = esm, .mode = "dynamic", count = 1)
 widget$render()

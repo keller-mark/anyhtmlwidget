@@ -19,6 +19,9 @@ class AnyModel {
   on(name, callback) {
     this.target.addEventListener(name, callback);
   }
+  off(name) {
+    // Not yet implemented
+  }
   save_changes() {
     const unsavedState = Object.fromEntries(
       Array.from(this.unsavedKeys.values())
@@ -109,6 +112,7 @@ HTMLWidgets.widget({
       	}
       },
       resize: async function(width, height) {
+        // TODO: emit resize event on window (and let user handle)?
         if(widget?.resize) {
           await widget.resize({ model, el, width, height });
         }

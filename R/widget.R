@@ -68,6 +68,9 @@ render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
 AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   lock_objects = FALSE,
   private = list(
+    # TODO: prefix with dot
+    # since R6 requires all items in
+    # public, private, and active to have unique names
     esm = NULL,
     values = NULL,
     mode = NULL,
@@ -79,50 +82,33 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     .height = NULL
   ),
   active = list(
-    width = function(value) {
-      if (missing(value)) {
-        return(private$.width)
-      } else {
-        private$.width <- value
-        # TODO: re-render if mode is "static"?
-        # TODO: emit via change handler?
-      }
-    },
-    height = function(value) {
-      if (missing(value)) {
-        return(private$.height)
-      } else {
-        private$.height <- value
-        # TODO: re-render if mode is "static"?
-        # TODO: emit via change handler?
-      }
-    }
+
   ),
   public = list(
-    initialize = function(esm = NA, mode = NA, width = NA, height = NA, values = NA) {
-      private$esm <- esm
-      private$values <- values
+    initialize = function(.esm = NA, .mode = NA, .width = NA, .height = NA, .commands = NA, ...) {
+      private$esm <- .esm
+      private$values <- list(...)
 
-      if(is.na(width)) {
-        width <- 600
+      if(is.na(.width)) {
+        .width <- "100%"
       }
-      if(is.na(height)) {
-        height <- 400
+      if(is.na(.height)) {
+        .height <- "100%"
       }
 
-      private$.width <- width
-      private$.height <- height
+      private$.width <- .width
+      private$.height <- .height
 
       private$server_host <- "0.0.0.0"
       private$server_port <- httpuv::randomPort(min = 8000, max = 9000, n = 1000)
 
-      if(is.na(mode)) {
-        mode <- "static"
+      if(is.na(.mode)) {
+        .mode <- "static"
       }
-      if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
+      if(!.mode %in% c("static", "gadget", "shiny", "dynamic")) {
         stop("Invalid widget mode.")
       }
-      private$mode <- mode
+      private$mode <- .mode
 
       active_env <- self$`.__enclos_env__`$`.__active__`
 
@@ -161,6 +147,12 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     },
     get_values = function() {
       return(private$values)
+    },
+    get_width = function() {
+      return(private$.width)
+    },
+    get_height = function() {
+      return(private$.height)
     },
     set_values = function(new_values) {
       private$values <- new_values
@@ -213,8 +205,8 @@ invoke_static <- function(w) {
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
     values = w$get_values(),
-    width = w$width,
-    height = w$height
+    width = w$get_width(),
+    height = w$get_height()
   )
   print(w)
 }
@@ -224,8 +216,8 @@ invoke_dynamic <- function(w) {
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
     values = w$get_values(),
-    width = 400,
-    height = 600,
+    width = w$get_width(),
+    height = w$get_height(),
     port = w$get_port(),
     host = w$get_host()
   )
@@ -266,7 +258,7 @@ invoke_gadget <- function(w) {
     })
 
     output$my_widget <- render_anyhtmlwidget(expr = {
-      the_anyhtmlwidget(esm = w$get_esm(), values = w$get_values(), width = w$width, height = w$height)
+      the_anyhtmlwidget(esm = w$get_esm(), values = w$get_values(), width = w$get_width(), height = w$get_height())
     })
   }
 
