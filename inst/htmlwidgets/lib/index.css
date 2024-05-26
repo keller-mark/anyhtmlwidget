@@ -1,0 +1,7 @@
+html, body, #htmlwidget_container {
+  height: 100%;
+  margin: 0;
+}
+.anyhtmlwidget {
+  box-sizing: border-box;
+}

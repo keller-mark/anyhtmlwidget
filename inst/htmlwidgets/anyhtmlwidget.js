@@ -89,7 +89,7 @@ HTMLWidgets.widget({
 
       	if(window && window.Shiny && window.Shiny.addCustomMessageHandler) {
       	  const eventPrefix = x.ns_id ? `${x.ns_id}-` : '';
-      	  Shiny.addCustomMessageHandler(`${eventPrefix}anyhtmlwidget_on_change`, ({ key, value}) => {
+      	  Shiny.addCustomMessageHandler(`${eventPrefix}anyhtmlwidget_on_change`, ({ key, value }) => {
       	    model.set(key, value);
       	  });
       	} else if(x.port && x.host) {

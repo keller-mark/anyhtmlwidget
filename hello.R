@@ -2,6 +2,7 @@ library(anyhtmlwidget)
 
 esm <- "
 function render({ el, model }) {
+  el.style.border = '4px solid red';
   let count = () => model.get('count');
   let btn = document.createElement('button');
   btn.innerHTML = `count is ${count()}`;
