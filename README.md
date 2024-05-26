@@ -36,8 +36,8 @@ function render({ el, model }) {
 export default { render };
 "
 
-widget <- AnyHtmlWidget$new(.esm = esm, .mode = "static", count = 1)
-widget
+widget <- AnyHtmlWidget$new(.esm = esm, .mode = "dynamic", count = 1)
+widget$render()
 ```
 
 Setting a value will cause a re-render:
@@ -55,9 +55,9 @@ widget$count
 
 ## Modes
 
-- `static`
-- `gadget`
-- `dynamic`
-- `shiny`
+- `dynamic`: Bidirectional communication via background WebSocket server. Does not block R console.
+- `gadget`: Bidirectional communication via Shiny running as a Gadget. Blocks R console.
+- `static`: Unidirectional communication (R -> JS). Does not block R console.
+- `shiny`: Bidirectional communication. Use when embedding a widget in a Shiny app.
 
 
