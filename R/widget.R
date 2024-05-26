@@ -1,38 +1,22 @@
-#' Vitessce Widget
+#' The htmlwidget
 #'
-#' This function creates a new Vitessce htmlwidget.
-#' A Vitessce widget is defined by a config which specifies dataset(s),
-#' a layout of views, and linked view connections. A config object can be
-#' passed to the widget using the \code{config} parameter.
+#' TODO
 #'
-#' We do not recommend calling this function directly. Instead, we
-#' recommend calling the \code{widget()} method on the \code{VitessceConfig}
-#' instance.
-#'
-#' @param config A view config as a `VitessceConfig` object.
-#' @param theme The theme of the widget, either "dark" or "light". Optional. By default, "dark".
 #' @param width The width of the widget as a number or CSS string. Optional.
 #' @param height The height of the widget as a number or CSS string. Optional.
-#' @param port The port for the local web server (which serves local dataset objects to the widget).
-#' Optional. By default, uses open port between 8000 and 9000.
-#' @param base_url The base URL for the web server. Optional.
-#' By default, creates a localhost URL which includes the port.
-#' @param serve Should local data be served by running a local web server with R plumber? By default, TRUE.
 #' @param element_id An element ID. Optional.
 #' @return The htmlwidget.
 #'
 #' @export
-#'
-#' @examples
-#' ESM <- "function render() {}
-#' anyhtmlwidget()
-the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, element_id = NULL) {
+the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, port = NULL, host = NULL, element_id = NULL) {
 
   # forward widget options to javascript
   params = list(
     esm = esm,
     values = values,
-    ns_id = ns_id
+    ns_id = ns_id,
+    port = port,
+    host = host
   )
 
   # create widget
@@ -84,26 +68,47 @@ render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
 AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   lock_objects = FALSE,
   private = list(
+    # TODO: prefix with dot
+    # since R6 requires all items in
+    # public, private, and active to have unique names
     esm = NULL,
     values = NULL,
     mode = NULL,
-    change_handler = NULL
+    change_handler = NULL,
+    server = NULL,
+    server_host = NULL,
+    server_port = NULL,
+    .width = NULL,
+    .height = NULL
   ),
   active = list(
 
   ),
   public = list(
-    initialize = function(esm = NA, mode = NA, ...) {
-      private$esm <- esm
+    initialize = function(.esm = NA, .mode = NA, .width = NA, .height = NA, .commands = NA, ...) {
+      private$esm <- .esm
       private$values <- list(...)
 
-      if(is.na(mode)) {
-        mode <- "static"
+      if(is.na(.width)) {
+        .width <- "100%"
       }
-      if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
+      if(is.na(.height)) {
+        .height <- "100%"
+      }
+
+      private$.width <- .width
+      private$.height <- .height
+
+      private$server_host <- "0.0.0.0"
+      private$server_port <- httpuv::randomPort(min = 8000, max = 9000, n = 1000)
+
+      if(is.na(.mode)) {
+        .mode <- "static"
+      }
+      if(!.mode %in% c("static", "gadget", "shiny", "dynamic")) {
         stop("Invalid widget mode.")
       }
-      private$mode <- mode
+      private$mode <- .mode
 
       active_env <- self$`.__enclos_env__`$`.__active__`
 
@@ -143,6 +148,12 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     get_values = function() {
       return(private$values)
     },
+    get_width = function() {
+      return(private$.width)
+    },
+    get_height = function() {
+      return(private$.height)
+    },
     set_values = function(new_values) {
       private$values <- new_values
     },
@@ -151,6 +162,22 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         stop("Invalid widget mode.")
       }
       private$mode <- mode
+    },
+    start_server = function() {
+      if(is.null(private$server)) {
+        private$server <- start_server(self, host = private$server_host, port = private$server_port)
+      }
+    },
+    stop_server = function() {
+      if(!is.null(private$server)) {
+        private$server$stop()
+      }
+    },
+    get_host = function() {
+      return(private$server_host)
+    },
+    get_port = function() {
+      return(private$server_port)
     },
     print = function() {
       if(private$mode == "shiny") {
@@ -167,6 +194,8 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         invoke_static(self)
       } else if(private$mode == "gadget") {
         invoke_gadget(self)
+      } else if(private$mode == "dynamic") {
+        invoke_dynamic(self)
       }
     }
   )
@@ -176,8 +205,21 @@ invoke_static <- function(w) {
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
     values = w$get_values(),
-    width = 400,
-    height = 600
+    width = w$get_width(),
+    height = w$get_height()
+  )
+  print(w)
+}
+
+invoke_dynamic <- function(w) {
+  w$start_server()
+  w <- the_anyhtmlwidget(
+    esm = w$get_esm(),
+    values = w$get_values(),
+    width = w$get_width(),
+    height = w$get_height(),
+    port = w$get_port(),
+    host = w$get_host()
   )
   print(w)
 }
@@ -216,7 +258,7 @@ invoke_gadget <- function(w) {
     })
 
     output$my_widget <- render_anyhtmlwidget(expr = {
-      the_anyhtmlwidget(esm = w$get_esm(), values = w$get_values())
+      the_anyhtmlwidget(esm = w$get_esm(), values = w$get_values(), width = w$get_width(), height = w$get_height())
     })
   }
 
@@ -253,7 +295,7 @@ widgetServer <- function(id, w) {
       }
 
       output$widget <- render_anyhtmlwidget(expr = {
-        the_anyhtmlwidget(esm = w$get_esm(), values = initial_values, ns_id = id)
+        the_anyhtmlwidget(esm = w$get_esm(), values = initial_values,  width = w$width, height = w$height, ns_id = id)
       })
 
       return(rv)

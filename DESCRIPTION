@@ -11,5 +11,8 @@ Encoding: UTF-8
 LazyData: false
 Imports:
   htmlwidgets,
-  R6
+  R6,
+  shiny,
+  httpuv,
+  jsonlite
 RoxygenNote: 7.3.1
