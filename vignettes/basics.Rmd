@@ -7,8 +7,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
-  knitr::opts_chunk$set(
+knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   out.width = "100%"
@@ -38,6 +39,18 @@ function render({ el, model }) {
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(.esm = esm, .mode = "dynamic", count = 1)
+widget <- anyhtmlwidget::AnyHtmlWidget$new(
+  .esm = esm,
+  .mode = "static",
+  .height='400px',
+  count = 1
+)
+```
+
+```{r, eval = FALSE, echo = TRUE}
 widget
+```
+
+```{r, eval = TRUE, echo = FALSE}
+pkgdown::pkgdown_print(widget$render())
 ```

@@ -33,6 +33,7 @@ articles:
     navbar: Tutorials
     contents:
       - basics
+      - shiny
   - title: Articles
     navbar: Troubleshooting
     contents:
