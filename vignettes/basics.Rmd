@@ -55,6 +55,8 @@ widget
 
 ```{r, eval = TRUE, echo = FALSE}
 if(!is.null(knitr::opts_knit$get("rmarkdown.pandoc.to")) && knitr::opts_knit$get("rmarkdown.pandoc.to") == "html") {
-  pkgdown::pkgdown_print(widget$render())
+  tryCatch({
+    pkgdown::pkgdown_print(widget$render())
+  })
 }
 ```
