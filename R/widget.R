@@ -35,10 +35,7 @@ the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, he
   )
 }
 
-#' Shiny bindings for anyhtmlwidget
-#'
-#' Output and render functions for using anyhtmlwidget within Shiny
-#' applications and interactive Rmd documents.
+#' Internal Shiny UI binding for anyhtmlwidget.
 #'
 #' @param output_id output variable to read from
 #' @param width,height Must be a valid CSS unit (like \code{'100\%'},
@@ -55,8 +52,7 @@ anyhtmlwidget_output <- function(output_id, width = '100%', height = '400px'){
   htmlwidgets::shinyWidgetOutput(output_id, 'anyhtmlwidget', width, height, package = 'anyhtmlwidget')
 }
 
-#' @name anyhtmlwidget-shiny
-#' @return The Shiny server output.
+#' Internal Shiny server binding for anyhtmlwidget.
 #'
 #' @keywords internal
 render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
@@ -64,6 +60,13 @@ render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
   htmlwidgets::shinyRenderWidget(expr, anyhtmlwidget_output, env, quoted = TRUE)
 }
 
+#' AnyHtmlWidget
+#' @title AnyHtmlWidget Class
+#' @docType class
+#' @description
+#' Class representing a widget.
+#'
+#' @rdname AnyHtmlWidget
 #' @export
 AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   lock_objects = FALSE,
@@ -81,10 +84,16 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     .width = NULL,
     .height = NULL
   ),
-  active = list(
-
-  ),
+  active = list(),
   public = list(
+    #' @description
+    #' Create a new widget instance.
+    #' @param .esm The EcmaScript module as a string.
+    #' @param .mode The widget mode.
+    #' @param .width The widget width. Optional.
+    #' @param .height The widget height. Optional.
+    #' @param .commands TODO
+    #' @param ... All other named arguments will be used to create active bindings on the instance.
     initialize = function(.esm, .mode, .width = NA, .height = NA, .commands = NA, ...) {
       private$esm <- .esm
       private$values <- list(...)
@@ -126,6 +135,11 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       }
       self$`.__enclos_env__`$`.__active__` <- active_env
     },
+    #' @description
+    #' Set a value.
+    #' @param key The key of the value to set.
+    #' @param val The new value.
+    #' @param emit_change Should the on_change handler be called?
     set_value = function(key, val, emit_change = TRUE) {
       private$values[[key]] <- val
       if(emit_change && !is.null(private$change_handler)) {
@@ -133,49 +147,88 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         private$change_handler(key, val)
       }
     },
+    #' @description
+    #' Register a change handler to call if emit_change is TRUE in set_value.
+    #' @param callback A callback function to register.
     on_change = function(callback) {
       private$change_handler <- callback
     },
+    #' @description
+    #' Get a particular value.
+    #' @param key The key of the value to get.
+    #' @returns The value.
     get_value = function(key) {
       return(private$values[[key]])
     },
+    #' @description
+    #' Get the ESM string.
+    #' @returns The ESM string.
     get_esm = function() {
       return(private$esm)
     },
+    #' @description
+    #' Get all widget values
+    #' @returns List of values.
     get_values = function() {
       return(private$values)
     },
+    #' @description
+    #' Get the widget width.
+    #' @returns The width.
     get_width = function() {
       return(private$.width)
     },
+    #' @description
+    #' Get the widget height.
+    #' @returns The height.
     get_height = function() {
       return(private$.height)
     },
+    #' @description
+    #' Set all values. TODO: is this ever used?
+    #' @param new_values A list of new values.
     set_values = function(new_values) {
       private$values <- new_values
     },
+    #' @description
+    #' Set the widget mode.
+    #' @param mode The new widget mode.
     set_mode = function(mode) {
       if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
         stop("Invalid widget mode.")
       }
       private$mode <- mode
     },
+    #' @description
+    #' Start the server, if not running.
     start_server = function() {
       if(is.null(private$server)) {
         private$server <- start_server(self, host = private$server_host, port = private$server_port)
       }
     },
+    #' @description
+    #' Stop the server, if running.
     stop_server = function() {
       if(!is.null(private$server)) {
         private$server$stop()
       }
     },
+    #' @description
+    #' Get the server hostname.
+    #' @return The hostname as a string.
     get_host = function() {
       return(private$server_host)
     },
+    #' @description
+    #' Get the server port.
+    #' @returns The port number.
     get_port = function() {
       return(private$server_port)
     },
+    #' @description
+    #' Custom print function for the R6 class.
+    #' If mode is "shiny", falls back to original R6 print behavior.
+    #' Otherwise, renders the widget.
     print = function() {
       if(private$mode == "shiny") {
         # If Shiny mode, we just want to use the original R6 print behavior.
@@ -186,6 +239,8 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
         self$render()
       }
     },
+    #' @description
+    #' Render the widget.
     render = function() {
       if(private$mode == "static") {
         invoke_static(self)
@@ -200,6 +255,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
   )
 )
 
+#' @keywords internal
 invoke_static <- function(w) {
   w <- the_anyhtmlwidget(
     esm = w$get_esm(),
@@ -210,6 +266,7 @@ invoke_static <- function(w) {
   print(w)
 }
 
+#' @keywords internal
 invoke_dynamic <- function(w) {
   w$start_server()
   w <- the_anyhtmlwidget(
@@ -223,6 +280,7 @@ invoke_dynamic <- function(w) {
   print(w)
 }
 
+#' @keywords internal
 invoke_gadget <- function(w) {
   ui <- shiny::tagList(
     anyhtmlwidget_output(output_id = "my_widget", width = '100%', height = '100%')
@@ -261,13 +319,25 @@ invoke_gadget <- function(w) {
   shiny::runGadget(ui, server)
 }
 
-# Shiny module UI
+#' Shiny module UI for anyhtmlwidgets.
+#'
+#' @param id The output ID.
+#' @param width The widget width. Optional.
+#' @param height The widget height. Optional.
+#'
+#' @export
 widgetUI <- function(id, width = '100%', height = '400px') {
   ns <- shiny::NS(id)
   anyhtmlwidget_output(output_id = ns("widget"), width = width, height = height)
 }
 
-# Shiny module server
+#' Shiny module server for anyhtmlwidgets.
+#'
+#' @param id The matching output ID used in the Shiny UI.
+#' @param w The widget instance.
+#' @returns reactiveValues corresponding to the widget's active bindings.
+#'
+#' @export
 widgetServer <- function(id, w) {
   ns <- shiny::NS(id)
   shiny::moduleServer(
