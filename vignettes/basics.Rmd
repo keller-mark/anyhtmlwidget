@@ -10,6 +10,8 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
+  root.dir = dirname(dirname(getwd())),
+  rmarkdown.pandoc.to = knitr::opts_knit$get("rmarkdown.pandoc.to"),
   collapse = TRUE,
   comment = "#>",
   out.width = "100%"
@@ -52,5 +54,7 @@ widget
 ```
 
 ```{r, eval = TRUE, echo = FALSE}
-pkgdown::pkgdown_print(widget$render())
+if(!is.null(knitr::opts_knit$get("rmarkdown.pandoc.to")) && knitr::opts_knit$get("rmarkdown.pandoc.to") == "html") {
+  pkgdown::pkgdown_print(widget$render())
+}
 ```
