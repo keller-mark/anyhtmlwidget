@@ -19,4 +19,4 @@ export default { render };
 "
 
 widget <- anyhtmlwidget::AnyHtmlWidget$new(.esm = esm, .mode = "dynamic", count = 1)
-widget$render()
+widget

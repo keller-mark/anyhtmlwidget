@@ -1,5 +1,3 @@
-library(httpuv)
-
 start_server <- function(w, host = "0.0.0.0", port = 8080) {
   app <- list(
     onWSOpen = function(ws) {
@@ -37,7 +35,7 @@ start_server <- function(w, host = "0.0.0.0", port = 8080) {
     }
   )
 
-  s <- startServer(host = host, port = port, app = app)
+  s <- httpuv::startServer(host = host, port = port, app = app)
   return(s)
 }
 

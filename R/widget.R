@@ -1,16 +1,16 @@
-#' The htmlwidget
-#'
-#' TODO
-#'
+#' The internal function that creates the htmlwidget.
+#' @param esm The ES Module as a string.
+#' @param values The values that will be used for the initial Model state.
+#' @param ns_id Namespace ID, only used when in the Shiny module mode. Optional.
 #' @param width The width of the widget as a number or CSS string. Optional.
 #' @param height The height of the widget as a number or CSS string. Optional.
+#' @param port The port of the WebSocket server, when in dynamic mode. Optional.
+#' @param host The host of the WebSocket server, when in dynamic mode. Optional.
 #' @param element_id An element ID. Optional.
-#' @return The htmlwidget.
+#' @return The result of htmlwidgets::createWidget.
 #'
-#' @export
+#' @keywords internal
 the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, height = NULL, port = NULL, host = NULL, element_id = NULL) {
-
-  # forward widget options to javascript
   params = list(
     esm = esm,
     values = values,
@@ -19,9 +19,8 @@ the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, he
     host = host
   )
 
-  # create widget
   htmlwidgets::createWidget(
-    name = 'anyhtmlwidget',
+    'anyhtmlwidget',
     params,
     width = width,
     height = height,
@@ -51,15 +50,15 @@ the_anyhtmlwidget <- function(esm, values = NULL, ns_id = NULL, width = NULL, he
 #'   is useful if you want to save an expression in a variable.
 #' @return The Shiny UI element.
 #'
-#' @rdname anyhtmlwidget-shiny
-#' @export
+#' @keywords internal
 anyhtmlwidget_output <- function(output_id, width = '100%', height = '400px'){
   htmlwidgets::shinyWidgetOutput(output_id, 'anyhtmlwidget', width, height, package = 'anyhtmlwidget')
 }
 
 #' @name anyhtmlwidget-shiny
 #' @return The Shiny server output.
-#' @export
+#'
+#' @keywords internal
 render_anyhtmlwidget <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) { expr <- substitute(expr) } # force quoted
   htmlwidgets::shinyRenderWidget(expr, anyhtmlwidget_output, env, quoted = TRUE)
@@ -86,7 +85,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
 
   ),
   public = list(
-    initialize = function(.esm = NA, .mode = NA, .width = NA, .height = NA, .commands = NA, ...) {
+    initialize = function(.esm, .mode, .width = NA, .height = NA, .commands = NA, ...) {
       private$esm <- .esm
       private$values <- list(...)
 
@@ -103,9 +102,6 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       private$server_host <- "0.0.0.0"
       private$server_port <- httpuv::randomPort(min = 8000, max = 9000, n = 1000)
 
-      if(is.na(.mode)) {
-        .mode <- "static"
-      }
       if(!.mode %in% c("static", "gadget", "shiny", "dynamic")) {
         stop("Invalid widget mode.")
       }
@@ -228,16 +224,14 @@ invoke_dynamic <- function(w) {
 }
 
 invoke_gadget <- function(w) {
-  require(shiny)
-
-  ui <- tagList(
+  ui <- shiny::tagList(
     anyhtmlwidget_output(output_id = "my_widget", width = '100%', height = '100%')
   )
 
   server <- function(input, output, session) {
-    increment <- reactiveVal(0)
+    increment <- shiny::reactiveVal(0)
 
-    observeEvent(input$anyhtmlwidget_on_save_changes, {
+    shiny::observeEvent(input$anyhtmlwidget_on_save_changes, {
       # update values on w here
       for(key in names(input$anyhtmlwidget_on_save_changes)) {
         w$set_value(key, input$anyhtmlwidget_on_save_changes[[key]], emit_change = FALSE)
@@ -264,25 +258,25 @@ invoke_gadget <- function(w) {
     })
   }
 
-  runGadget(ui, server)
+  shiny::runGadget(ui, server)
 }
 
 # Shiny module UI
 widgetUI <- function(id, width = '100%', height = '400px') {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
   anyhtmlwidget_output(output_id = ns("widget"), width = width, height = height)
 }
 
 # Shiny module server
 widgetServer <- function(id, w) {
-  ns <- NS(id)
-  moduleServer(
+  ns <- shiny::NS(id)
+  shiny::moduleServer(
     id,
     function(input, output, session) {
       initial_values <- w$get_values()
-      rv <- do.call(reactiveValues, initial_values)
+      rv <- do.call(shiny::reactiveValues, initial_values)
 
-      observeEvent(input$anyhtmlwidget_on_save_changes, {
+      shiny::observeEvent(input$anyhtmlwidget_on_save_changes, {
         # update values on w here
         for(key in names(input$anyhtmlwidget_on_save_changes)) {
           rv[[key]] <- input$anyhtmlwidget_on_save_changes[[key]]
@@ -291,7 +285,7 @@ widgetServer <- function(id, w) {
       })
 
       for(key in names(initial_values)) {
-        observeEvent(rv[[key]], {
+        shiny::observeEvent(rv[[key]], {
           session$sendCustomMessage(ns("anyhtmlwidget_on_change"), list(key = key, value = rv[[key]]))
         })
       }
