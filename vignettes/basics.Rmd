@@ -1,0 +1,62 @@
+---
+title: "Basics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Basics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  root.dir = dirname(dirname(getwd())),
+  rmarkdown.pandoc.to = knitr::opts_knit$get("rmarkdown.pandoc.to"),
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "100%"
+)
+```
+
+## Basics
+
+```{r}
+library(anyhtmlwidget)
+
+esm <- "
+function render({ el, model }) {
+  el.style.border = '4px solid red';
+  let count = () => model.get('count');
+  let btn = document.createElement('button');
+  btn.innerHTML = `count is ${count()}`;
+  btn.addEventListener('click', () => {
+    model.set('count', count() + 1);
+    model.save_changes();
+  });
+  model.on('change:count', () => {
+    btn.innerHTML = `count is ${count()}`;
+  });
+  el.appendChild(btn);
+}
+export default { render };
+"
+
+widget <- anyhtmlwidget::AnyHtmlWidget$new(
+  .esm = esm,
+  .mode = "static",
+  .height='400px',
+  count = 1
+)
+```
+
+```{r, eval = FALSE, echo = TRUE}
+widget
+```
+
+```{r, eval = TRUE, echo = FALSE}
+if(!is.null(knitr::opts_knit$get("rmarkdown.pandoc.to")) && knitr::opts_knit$get("rmarkdown.pandoc.to") == "html") {
+  tryCatch({
+    pkgdown::pkgdown_print(widget$render())
+  })
+}
+```

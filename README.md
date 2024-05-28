@@ -6,8 +6,6 @@ Bringing core concepts from [anywidget](https://github.com/manzt/anywidget) to R
 - Access state from JS using the same AnyWidget `model` API.
 - Bidirectional communication (R <-> JS)
 
-Note: this is currently an experiment
-
 ## Installation
 
 ```R

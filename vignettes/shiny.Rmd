@@ -1,3 +1,23 @@
+---
+title: "Usage in Shiny"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Usage in Shiny}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+  knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "100%"
+)
+```
+
+## Usage in Shiny
+
+```{r}
 library(shiny)
 library(anyhtmlwidget)
 
@@ -42,3 +62,5 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
+```

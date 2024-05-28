@@ -1,0 +1,40 @@
+url: https://keller-mark.github.io/anyhtmlwidget/
+
+template:
+  bootstrap: 5
+  bslib:
+    base_font: {google: "Inter"}
+
+authors:
+  Mark Keller:
+    href: https://github.com/keller-mark
+
+navbar:
+  structure:
+    left:  [home, reference, articles]
+    right: [github]
+
+reference:
+- title: "Core"
+  desc: >
+    Use widgets in RStudio Viewer pane.
+- contents:
+  - AnyHtmlWidget
+- title: "Shiny"
+  desc: >
+    Use widgets in Shiny applications.
+- contents:
+  - widgetUI
+  - widgetServer
+
+
+articles:
+  - title: Articles
+    navbar: Tutorials
+    contents:
+      - basics
+      - shiny
+  - title: Articles
+    navbar: Troubleshooting
+    contents:
+      - session_info

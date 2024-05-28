@@ -1,18 +1,35 @@
 Package: anyhtmlwidget
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Create interactive widgets using EcmaScript Modules
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Authors@R: c(
+    person(
+      given = "Mark",
+      family = "Keller",
+      email = "mark_keller@g.harvard.edu",
+      role = c("cre", "aut"),
+      comment = c(ORCID = "0000-0003-3003-874X")
+    )
+  )
+Description: Anyhtmlwidget brings concepts from
+    AnyWidget to R.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: false
+BugReports: https://github.com/keller-mark/anyhtmlwidget/issues
+URL: https://github.com/keller-mark/anyhtmlwidget
+Depends: R (>= 4.0.0)
 Imports:
-  htmlwidgets,
-  R6,
-  shiny,
-  httpuv,
-  jsonlite
+    htmlwidgets,
+    R6,
+    shiny,
+    httpuv,
+    jsonlite
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
+Suggests:
+    testthat,
+    bslib,
+    pkgdown,
+    knitr,
+    rmarkdown
