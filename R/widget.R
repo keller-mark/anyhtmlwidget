@@ -111,7 +111,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       private$server_host <- "0.0.0.0"
       private$server_port <- httpuv::randomPort(min = 8000, max = 9000, n = 1000)
 
-      if(!.mode %in% c("static", "gadget", "shiny", "dynamic")) {
+      if(!.mode %in% c("static", "gadget", "shiny", "dynamic", "jupyter")) {
         stop("Invalid widget mode.")
       }
       private$mode <- .mode
@@ -194,7 +194,7 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     #' Set the widget mode.
     #' @param mode The new widget mode.
     set_mode = function(mode) {
-      if(!mode %in% c("static", "gadget", "shiny", "dynamic")) {
+      if(!mode %in% c("static", "gadget", "shiny", "dynamic", "jupyter")) {
         stop("Invalid widget mode.")
       }
       private$mode <- mode
@@ -244,6 +244,14 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     render = function() {
       if(private$mode == "static") {
         invoke_static(self)
+      } else if(private$mode == "jupyter") {
+        if (!(require("IRkernel", quietly = TRUE) && require("IRdisplay", quietly = TRUE))) {
+          stop("IRkernel and IRdisplay packages are required to use Jupyter mode.")
+        }
+        if(!getOption('jupyter.rich_display')) {
+          stop("jupyter.rich_display is not TRUE but jupyter mode was specified.")
+        }
+        IRdisplay::display(invoke_static(self))
       } else if(private$mode == "gadget") {
         invoke_gadget(self)
       } else if(private$mode == "dynamic") {
