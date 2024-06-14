@@ -32,6 +32,4 @@ Suggests:
     bslib,
     pkgdown,
     knitr,
-    rmarkdown,
-    IRkernel,
-    IRdisplay
+    rmarkdown
