@@ -4,7 +4,7 @@ start_server <- function(w, host = "0.0.0.0", port = 8080) {
       # The ws object is a WebSocket object
       cat("Server connection opened.\n")
 
-      w$on_change(function(key, new_val) {
+      w$.on_change(function(key, new_val) {
         msg_list <- list(
           type = jsonlite::unbox("on_change"),
           payload = list(
@@ -22,7 +22,7 @@ start_server <- function(w, host = "0.0.0.0", port = 8080) {
 
         if(msg_type == "on_save_changes") {
           for(key in names(msg_val)) {
-            w$set_value(key, msg_val[[key]], emit_change = FALSE)
+            w$.set_value(key, msg_val[[key]], emit_change = FALSE)
           }
         }
 
