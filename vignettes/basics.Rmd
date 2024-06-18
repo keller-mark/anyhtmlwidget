@@ -41,7 +41,7 @@ function render({ el, model }) {
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(
+widget <- AnyHtmlWidget$new(
   .esm = esm,
   .mode = "static",
   .height='400px',

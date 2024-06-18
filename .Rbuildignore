@@ -1,2 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.BBSoptions$
+^.github$
+^pkgdown$
+^vignettes$
+^docs$
+^index\.md$
+^.ipynb_checkpoints$

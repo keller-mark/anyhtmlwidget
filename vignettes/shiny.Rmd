@@ -32,14 +32,14 @@ function render({ el, model }) {
     model.save_changes();
   });
   model.on('change:count', () => {
-        btn.innerHTML = `count is ${count()}`;
+    btn.innerHTML = `count is ${count()}`;
   });
   el.appendChild(btn);
 }
 export default { render };
 "
 
-widget <- anyhtmlwidget::AnyHtmlWidget$new(.esm = esm, .mode = "shiny", count = 2)
+widget <- AnyHtmlWidget$new(.esm = esm, .mode = "shiny", count = 2)
 
 
 ui <- fluidPage(
@@ -62,5 +62,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
-
 ```
