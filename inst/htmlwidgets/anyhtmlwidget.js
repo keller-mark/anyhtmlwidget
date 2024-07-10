@@ -1,11 +1,21 @@
 class CallbackRegistry {
+  /** @type {Record<string, Function[]>} */
   #callbacks = {};
+  /**
+   * @param {string} name
+   * @param {Function} callback
+   */
   add(name, callback) {
     if (!this.#callbacks[name]) {
       this.#callbacks[name] = [];
     }
     this.#callbacks[name].push(callback);
   }
+  /**
+   * @param {string} name
+   * @param {Function} [callback] - a specific callback to remove
+   * @returns {Function[]} - the removed callbacks
+   */
   remove(name, callback) {
     if (!this.#callbacks[name]) {
       return [];
