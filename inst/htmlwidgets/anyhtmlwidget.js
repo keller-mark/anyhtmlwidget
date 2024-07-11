@@ -1,38 +1,123 @@
+class CallbackRegistry {
+  /** @type {Record<string, Function[]>} */
+  #callbacks = {};
+  /**
+   * @param {string} name
+   * @param {Function} callback
+   */
+  add(name, callback) {
+    if (!this.#callbacks[name]) {
+      this.#callbacks[name] = [];
+    }
+    this.#callbacks[name].push(callback);
+  }
+  /**
+   * @param {string} name
+   * @param {Function} [callback] - a specific callback to remove
+   * @returns {Function[]} - the removed callbacks
+   */
+  remove(name, callback) {
+    if (!this.#callbacks[name]) {
+      return [];
+    }
+    const callbacks = this.#callbacks[name];
+    if (callback) {
+      // Remove a specific callback
+      return this.#callbacks[name] = callbacks.filter((cb) => cb !== callback);
+    }
+    // Remove all callbacks
+    this.#callbacks[name] = [];
+    return callbacks;
+  }
+}
+
+/**
+ * An R-backed implementation of the @anywidget/types AnyModel interface.
+ *
+ * @see {@link https://github.com/manzt/anywidget/tree/main/packages/types}
+ */
 class AnyModel {
+  /** @type {Record<string, any>} */
+  #state;
+  /** @type {string} */
+  #ns_id;
+  /** @type {WebSocket | undefined} */
+  #ws = undefined;
+  /** @type {EventTarget} */
+  #target = new EventTarget();
+  /** @type {CallbackRegistry} */
+  #callbacks = new CallbackRegistry();
+  /** @type {Set<string>} */
+  #unsavedKeys = new Set();
+
+  /**
+   * @param {Record<string, any>} state - initial model state
+   * @param {string} ns_id - the Shiny namespace ID
+   * @param {WebSocket} [ws] - a WebSocket connection
+   */
   constructor(state, ns_id, ws) {
-    this.ns_id = ns_id;
-    this.state = state;
-    this.target = new EventTarget();
-    this.ws = ws;
-    this.unsavedKeys = new Set();
+    this.#ns_id = ns_id;
+    this.#state = state;
+    this.#ws = ws;
   }
+  /** @param {string} name */
   get(name) {
-    return this.state[name];
+    return this.#state[name];
   }
+  /**
+   * @param {string} key
+   * @param {any} value
+   */
   set(key, value) {
-    this.state[key] = value;
-    this.unsavedKeys.add(key);
-    this.target.dispatchEvent(
-			new CustomEvent(`change:${key}`, { detail: value }),
-		);
+    this.#state[key] = value;
+    this.#unsavedKeys.add(key);
+    this.#target.dispatchEvent(
+      new CustomEvent(`change:${key}`, { detail: value }),
+    );
+    this.#target.dispatchEvent(
+      new CustomEvent("change", { detail: value }),
+    );
   }
+  /**
+   * @param {string} name
+   * @param {Function} callback
+   */
   on(name, callback) {
-    this.target.addEventListener(name, callback);
+    this.#target.addEventListener(name, callback);
+    this.#callbacks.add(name, callback);
   }
-  off(name) {
-    // Not yet implemented
+  /**
+   * @param {string} name
+   * @param {Function} [callback]
+   */
+  off(name, callback) {
+    for (const cb of this.#callbacks.remove(name, callback)) {
+      this.#target.removeEventListener(name, cb);
+    }
+  }
+  /**
+   * @param {any} msg
+   * @param {unknown} [callbacks]
+   * @param {ArrayBuffer[]} [buffers]
+   */
+  send(msg, callbacks, buffers) {
+    // TODO: impeThrow?
+    console.error(`model.send is not yet implemented for anyhtmlwidget`);
   }
   save_changes() {
     const unsavedState = Object.fromEntries(
-      Array.from(this.unsavedKeys.values())
-        .map(key => ([key, this.state[key]]))
+      Array.from(this.#unsavedKeys.values())
+        .map((key) => [key, this.#state[key]]),
     );
-    this.unsavedKeys = new Set();
-    if(window && window.Shiny && window.Shiny.setInputValue) {
-      const eventPrefix = this.ns_id ? `${this.ns_id}-` : '';
-      Shiny.setInputValue(`${eventPrefix}anyhtmlwidget_on_save_changes`, unsavedState);
-    } else if(this.ws) {
-      this.ws.send(JSON.stringify({
+    this.#unsavedKeys = new Set();
+    if (window && window.Shiny && window.Shiny.setInputValue) {
+      const eventPrefix = this.#ns_id ? `${this.#ns_id}-` : "";
+      Shiny.setInputValue(
+        `${eventPrefix}anyhtmlwidget_on_save_changes`,
+        unsavedState,
+      );
+    } else if (this.#ws) {
+      this.#ws.send(JSON.stringify({
         type: "on_save_changes",
         payload: unsavedState,
       }));
