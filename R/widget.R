@@ -185,6 +185,12 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       return(private$.height)
     },
     #' @description
+    #' Get the server port.
+    #' @returns The port number.
+    .get_mode = function() {
+      return(private$.mode)
+    },
+    #' @description
     #' Set all values. TODO: is this ever used?
     #' @param new_values A list of new values.
     .set_values = function(new_values) {
