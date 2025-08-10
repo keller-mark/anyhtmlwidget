@@ -257,6 +257,16 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
       } else {
         stop("render is meant for use with static, gadget, and dynamic modes")
       }
+    },
+    #' @description
+    #' Return the htmlwidget.
+    #' Only works in "static" or "dynamic" mode.
+    .get_htmlwidget = function() {
+      if(private$.mode == "static" || private$.mode == "dynamic") {
+        self$render(return_widget = TRUE)
+      } else {
+        stop(".get_htmlwidget is meant for use with static and dynamic modes")
+      }
     }
   )
 )

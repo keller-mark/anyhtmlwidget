@@ -91,6 +91,8 @@ test_that("render return value reflects mode", {
 
   render_val <- static_w$render(return_widget = TRUE)
   expect_equal(class(render_val), c("anyhtmlwidget", "htmlwidget"))
+  render_val2 <- static_w$.get_htmlwidget()
+  expect_equal(class(render_val2), c("anyhtmlwidget", "htmlwidget"))
 
   dynamic_w <- AnyHtmlWidget$new(
     .esm = esm,
@@ -100,6 +102,8 @@ test_that("render return value reflects mode", {
   )
   render_val <- dynamic_w$render(return_widget = TRUE)
   expect_equal(class(render_val), c("anyhtmlwidget", "htmlwidget"))
+  render_val2 <- static_w$.get_htmlwidget()
+  expect_equal(class(render_val2), c("anyhtmlwidget", "htmlwidget"))
   
   shiny_w <- AnyHtmlWidget$new(
     .esm = esm,
@@ -108,6 +112,7 @@ test_that("render return value reflects mode", {
     count = 1
   )
   expect_error(shiny_w$render(return_widget = TRUE), "render is meant for use with static, gadget, and dynamic modes")
+  expect_error(shiny_w$.get_htmlwidget(), ".get_htmlwidget is meant for use with static and dynamic modes")
 
   gadget_w <- AnyHtmlWidget$new(
     .esm = esm,
@@ -118,5 +123,6 @@ test_that("render return value reflects mode", {
   render_val <- gadget_w$render(return_widget = TRUE)
   expect_equal(class(render_val), c("list"))
   expect_equal(names(render_val), c("ui", "server"))
+  expect_error(gadget_w$.get_htmlwidget(), ".get_htmlwidget is meant for use with static and dynamic modes")
 
 })
