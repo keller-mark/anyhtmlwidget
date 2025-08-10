@@ -102,7 +102,7 @@ test_that("render return value reflects mode", {
   )
   render_val <- dynamic_w$render(return_widget = TRUE)
   expect_equal(class(render_val), c("anyhtmlwidget", "htmlwidget"))
-  render_val2 <- static_w$.get_htmlwidget()
+  render_val2 <- dynamic_w$.get_htmlwidget()
   expect_equal(class(render_val2), c("anyhtmlwidget", "htmlwidget"))
   
   shiny_w <- AnyHtmlWidget$new(
