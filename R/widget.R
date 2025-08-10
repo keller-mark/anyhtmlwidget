@@ -247,33 +247,46 @@ AnyHtmlWidget <- R6::R6Class("AnyHtmlWidget",
     },
     #' @description
     #' Render the widget.
-    render = function() {
+    render = function(return_widget = FALSE) {
       if(private$.mode == "static") {
-        invoke_static(self)
+        invoke_static(self, return_widget = return_widget)
       } else if(private$.mode == "gadget") {
-        invoke_gadget(self)
+        invoke_gadget(self, return_widget = return_widget)
       } else if(private$.mode == "dynamic") {
-        invoke_dynamic(self)
+        invoke_dynamic(self, return_widget = return_widget)
       } else {
         stop("render is meant for use with static, gadget, and dynamic modes")
+      }
+    },
+    #' @description
+    #' Return the htmlwidget.
+    #' Only works in "static" or "dynamic" mode.
+    .get_htmlwidget = function() {
+      if(private$.mode == "static" || private$.mode == "dynamic") {
+        self$render(return_widget = TRUE)
+      } else {
+        stop(".get_htmlwidget is meant for use with static and dynamic modes")
       }
     }
   )
 )
 
 #' @keywords internal
-invoke_static <- function(w) {
+invoke_static <- function(w, return_widget = FALSE) {
   w <- the_anyhtmlwidget(
     esm = w$.get_esm(),
     values = w$.get_values(),
     width = w$.get_width(),
     height = w$.get_height()
   )
+  if(return_widget) {
+    return(w)
+  }
   print(w)
 }
 
 #' @keywords internal
-invoke_dynamic <- function(w) {
+invoke_dynamic <- function(w, return_widget = FALSE) {
   w$.start_server()
   w <- the_anyhtmlwidget(
     esm = w$.get_esm(),
@@ -283,11 +296,14 @@ invoke_dynamic <- function(w) {
     port = w$.get_port(),
     host = w$.get_host()
   )
+  if(return_widget) {
+    return(w)
+  }
   print(w)
 }
 
 #' @keywords internal
-invoke_gadget <- function(w) {
+invoke_gadget <- function(w, return_widget = FALSE) {
   ui <- shiny::tagList(
     anyhtmlwidget_output(output_id = "my_widget", width = '100%', height = '100%')
   )
@@ -320,6 +336,10 @@ invoke_gadget <- function(w) {
     output$my_widget <- render_anyhtmlwidget(expr = {
       the_anyhtmlwidget(esm = w$.get_esm(), values = w$.get_values(), width = w$.get_width(), height = w$.get_height())
     })
+  }
+
+  if(return_widget) {
+    return(list(ui = ui, server = server))
   }
 
   shiny::runGadget(ui, server)
